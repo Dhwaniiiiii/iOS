@@ -1,0 +1,406 @@
+// GUI + CRUD + Controller (no steps only code)
+
+------STUDENT ADD WITH DATE PICKER--------
+
+//
+//  StudentViewController.swift
+//  aprExternal
+//
+//  Created by Ravindrasinh Kiritsinh Medhat on 26/04/24.
+//
+
+import UIKit
+import CoreData
+class StudentViewController: UIViewController {
+
+    @IBOutlet weak var txtRoll: UITextField!
+    @IBOutlet weak var txtName: UITextField!
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        let path = NSSearchPathForDirectoriesInDomains(.documentDirectory, .allDomainsMask, true)
+        print(path[0])
+        dob.datePickerMode = .date
+        // Do any additional setup after loading the view.
+    }
+    
+    @IBOutlet weak var dob: UIDatePicker!
+    
+    @IBAction func btnInsert(_ sender: Any) {
+        let df = DateFormatter()
+        df.dateFormat = "dd/MM/yyyy"
+        let strDate = df.string(from: dob.date)
+        
+        let moc = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let Stud = Student(context: moc)
+        Stud.roll = Int16(txtRoll.text!)!
+        Stud.name = txtName.text
+        Stud.dob = dob.date
+        
+        let alert = UIAlertController(title: "Insert", message: "Do you want to insert!?", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: {_ in try!moc.save();print("Inserted!!")}))
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+        self.present(alert, animated: true)
+    }
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // Get the new view controller using segue.destination.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}
+
+
+------MARKS ADD USING PICKER VIEW-------
+
+//
+//  MarksViewController.swift
+//  aprExternal
+//
+//  Created by Ravindrasinh Kiritsinh Medhat on 26/04/24.
+//
+
+import UIKit
+import CoreData
+class MarksViewController: UIViewController, UIPickerViewDelegate, UIPickerViewDataSource {
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return slist.count
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        return slist[row].name
+    }
+    
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        selectedStudent = slist[row]
+    }
+    
+    func display()
+    {
+        let moc = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let fr = NSFetchRequest<Student>(entityName: "Student")
+        do{
+            slist = try! moc.fetch(fr)
+            pickerStud.reloadAllComponents();
+        }
+    }
+    
+    @IBOutlet weak var txtm1: UITextField!
+    @IBOutlet weak var txtm2: UITextField!
+    @IBOutlet weak var pickerStud: UIPickerView!
+    
+    var slist:[Student] = []
+    var selectedStudent:Student?
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        display()
+        // Do any additional setup after loading the view.
+    }
+    
+    
+    @IBAction func btnAddMarks(_ sender: Any) {
+        let moc = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let marks = Marks(context: moc)
+        marks.roll = Int16(selectedStudent!.roll)
+        marks.m1 = Int32(txtm1.text!)!
+        marks.m2 = Int32(txtm2.text!)!
+        selectedStudent?.addToToMarks(marks)
+        do{
+            try! moc.save()
+        }catch{
+            print(error)
+        }
+        
+    }
+    
+
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // Get the new view controller using segue.destination.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}
+
+----------STUDENT DISPLAY WITH UPDATE WITH ALERT ACTION SHEET-----
+
+//
+//  StudentTableViewController.swift
+//  aprExternal
+//
+//  Created by Ravindrasinh Kiritsinh Medhat on 26/04/24.
+//
+
+import UIKit
+import CoreData
+class StudentTableViewController: UITableViewController {
+
+    var studentList:[Student] = []
+    func display()
+    {
+        let moc = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let fr = NSFetchRequest<Student>(entityName: "Student")
+        do{
+            studentList = try! moc.fetch(fr)
+        }
+    }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        display()
+        // Uncomment the following line to preserve selection between presentations
+        // self.clearsSelectionOnViewWillAppear = false
+
+        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
+        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+    }
+
+    // MARK: - Table view data source
+
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        // #warning Incomplete implementation, return the number of sections
+        return 1
+    }
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        // #warning Incomplete implementation, return the number of rows
+        return studentList.count
+    }
+
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.textLabel?.text = "Name: \(studentList[indexPath.row].name)"
+        // Configure the cell...
+
+        return cell
+    }
+    
+
+    /*
+    // Override to support conditional editing of the table view.
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        // Return false if you do not want the specified item to be editable.
+        return true
+    }
+    */
+
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let alert = UIAlertController(title: "Update", message: "Update stud?", preferredStyle: .actionSheet)
+        alert.addAction(UIAlertAction(title: "Update", style: .default, handler: {
+            [weak self] _ in
+            let alert1 = UIAlertController(title: "Update Student", message: nil, preferredStyle: .alert)
+            alert1.addTextField(configurationHandler: {txtHand in
+                txtHand.placeholder="Update Your Name"
+                txtHand.text = self?.studentList[indexPath.row].name!
+            })
+            alert1.addAction(UIAlertAction(title: "Update", style: .default, handler: {[weak self] _ in
+                let moc = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+                let stud = self!.studentList[indexPath.row]
+                stud.name=alert1.textFields?[0].text
+                do{
+                    try! moc.save()
+                    let obj = self?.storyboard?.instantiateViewController(identifier: "om") as! ViewController
+                    self?.present(obj, animated: true)
+                }
+            }))
+            self?.present(alert1, animated: true)
+            
+        }))
+        self.present(alert, animated: true)
+    }
+    // Override to support editing the table view.
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            // Delete the row from the data source
+            
+            let moc = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+            moc.delete(studentList[indexPath.row])
+            
+            try! moc.save()
+            studentList.remove(at: indexPath.row)
+            
+            tableView.deleteRows(at: [indexPath], with: .fade)
+        } else if editingStyle == .insert {
+            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+        }    
+    }
+    
+
+    /*
+    // Override to support rearranging the table view.
+    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
+
+    }
+    */
+
+    /*
+    // Override to support conditional rearranging of the table view.
+    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        // Return false if you do not want the item to be re-orderable.
+        return true
+    }
+    */
+
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // Get the new view controller using segue.destination.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}
+
+
+--------SEARCH DISPLAY TABLE-------
+
+//
+//  SearchTableViewController.swift
+//  aprExternal
+//
+//  Created by Ravindrasinh Kiritsinh Medhat on 26/04/24.
+//
+
+import UIKit
+import CoreData
+class SearchTableViewController: UITableViewController {
+
+    var studentList:[Student] = []
+    var msg:String=""
+    func display()
+    {
+        let moc = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+        let fr = NSFetchRequest<Student>(entityName: "Student")
+        fr.predicate = NSPredicate(format: "name==%@", "\(msg)")
+        print(msg)
+        do{
+            studentList = try! moc.fetch(fr)
+        }
+    }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+display()
+        // Uncomment the following line to preserve selection between presentations
+        // self.clearsSelectionOnViewWillAppear = false
+
+        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
+        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+    }
+
+    // MARK: - Table view data source
+
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        // #warning Incomplete implementation, return the number of sections
+        return 1
+    }
+
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        // #warning Incomplete implementation, return the number of rows
+        return studentList.count
+    }
+
+    
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.textLabel?.text="\(studentList[indexPath.row].name!)"
+        // Configure the cell...
+
+        return cell
+    }
+    
+
+    /*
+    // Override to support conditional editing of the table view.
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        // Return false if you do not want the specified item to be editable.
+        return true
+    }
+    */
+
+    /*
+    // Override to support editing the table view.
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        if editingStyle == .delete {
+            // Delete the row from the data source
+            tableView.deleteRows(at: [indexPath], with: .fade)
+        } else if editingStyle == .insert {
+            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+        }    
+    }
+    */
+
+    /*
+    // Override to support rearranging the table view.
+    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
+
+    }
+    */
+
+    /*
+    // Override to support conditional rearranging of the table view.
+    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
+        // Return false if you do not want the item to be re-orderable.
+        return true
+    }
+    */
+
+    /*
+    // MARK: - Navigation
+
+    // In a storyboard-based application, you will often want to do a little preparation before navigation
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        // Get the new view controller using segue.destination.
+        // Pass the selected object to the new view controller.
+    }
+    */
+
+}
+
+
+--------VIEW CONTROLLER NORMAL------
+
+//
+//  ViewController.swift
+//  aprExternal
+//
+//  Created by Ravindrasinh Kiritsinh Medhat on 26/04/24.
+//
+
+import UIKit
+
+class ViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Do any additional setup after loading the view.
+    }
+    @IBOutlet weak var txtS: UITextField!
+    @IBAction func btns(_ sender: Any) {
+        let obj = self
+.storyboard?.instantiateViewController(identifier: "arya") as! SearchTableViewController
+        obj.msg = txtS.text!
+        self.present(obj, animated: true)
+    }
+    
+
+}
+
+------STEPS------
+
+
+for update add storyboard id in (Main Story Board) viewController
+
+for search add storyboard id in (SEARCH TABLE) viewController
